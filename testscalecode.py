@@ -8,17 +8,10 @@ Contributors:
 """
 
 # Imports
-#import json
-#import pandas as pd
 #import logging
-#import numpy as np
 import os
 import datetime
 import rasterio
-#from rasterio.mask import mask
-#from rasterio.features import geometry_mask
-#from shapely.geometry import mapping
-#from rasterstats import zonal_stats
 
 
 def pre(imagename):
@@ -92,46 +85,27 @@ def savi(nir, red, L = 0.5):
     return savi
 
 
-def savedata():
-    
-""" with rasterio.open(os.path.join(image_dir,'{}_indices.tif'.format(iteration)), 'w', **s2prof) as dst:
-  for block_index, window in dst.block_windows(1):
-    #read in each band of pre fire image for current window
-    s2pre_block_blue = s2pre.read(1, window=window, masked=True).astype(float)
-    s2pre_block_green = s2pre.read(2, window=window, masked=True).astype(float)
-    s2pre_block_red = s2pre.read(3, window=window, masked=True).astype(float)
-    s2pre_block_re5 = s2pre.read(4, window=window, masked=True).astype(float)
-    s2pre_block_re6 = s2pre.read(5, window=window, masked=True).astype(float)
-    s2pre_block_re7 = s2pre.read(6, window=window, masked=True).astype(float)
-    s2pre_block_NIR = s2pre.read(7, window=window, masked=True).astype(float)
-    s2pre_block_NIR8A = s2pre.read(8, window=window, masked=True).astype(float)
-    s2pre_block_SWIR1 = s2pre.read(9, window=window, masked=True).astype(float)
-    s2pre_block_SWIR2 = s2pre.read(10, window=window, masked=True).astype(float)
+def savedata(od, nbr, profile):
+    kwds = profile
 
-    #read in each band of post fire image for current window
-    s2post_block_blue = s2post.read(1, window=window, masked=True).astype(float)
-    s2post_block_green = s2post.read(2, window=window, masked=True).astype(float)
-    s2post_block_red = s2post.read(3, window=window, masked=True).astype(float)
-    s2post_block_re5 = s2post.read(4, window=window, masked=True).astype(float)
-    s2post_block_re6 = s2post.read(5, window=window, masked=True).astype(float)
-    s2post_block_re7 = s2post.read(6, window=window, masked=True).astype(float)
-    s2post_block_NIR = s2post.read(7, window=window, masked=True).astype(float)
-    s2post_block_NIR8A = s2post.read(8, window=window, masked=True).astype(float)
-    s2post_block_SWIR1 = s2post.read(9, window=window, masked=True).astype(float)
-    s2post_block_SWIR2 = s2post.read(10, window=window, masked=True).astype(float)
-    
-   
-    np.seterr(divide='ignore', invalid = 'ignore' ) #ignore errors from calculating indices/ ratios#over= 'ignore', under = 'ignore' 
+    # Change the format driver for the destination dataset to
+    #kwds['driver'] = 'GTiff'
+    kwds['dtype'] = 'float32'
+    kwds['count'] = 1
 
-    
-    
+    # Add GeoTIFF-specific keyword arguments.
+    #kwds['tiled'] = True
+    #kwds['blockxsize'] = 256
+    #kwds['blockysize'] = 256
+    #kwds['compress'] = 'JPEG'
 
-    #write results for current window
-    dst.write_band(1, pre_nbr, window = window)
-    dst.write_band(2, post_nbr, window = window)
-     """
-    pass
+    with rasterio.open((os.path.join(od, 'second.tif')), 'w', **kwds) as dst_dataset:
+        # Write data to the destination dataset.
+        dst_dataset.write(nbr, 1)
 
+    # TODO: Flexible output name
+    # TODO: Multiple band write? 
+    # TODO: np.seterr(divide='ignore', invalid = 'ignore' ) #ignore errors from calculating indices/ ratios#over= 'ignore', under = 'ignore' 
 
 
 
@@ -156,6 +130,7 @@ if __name__ == "__main__":
     print('--GETTING DATA--')
     # pre-fire image
     prered, prenir, preswir1, preswir2, preprofile = pre(image_data)
+    print(preprofile)
     # post-fire image
     #postred, postnir, postswir1, postswir2, postprofile = post(image_data)
     
@@ -173,13 +148,15 @@ if __name__ == "__main__":
 
     print('--CALCULATING SAVI--')
     presavi = savi(prenir, prered)
-    print("Pre-SAVI Shape: ", bob.shape)
+    print("Pre-SAVI Shape: ", presavi.shape)
     #postsavi = savi(postnir, postred)
     #print("Pre-SAVI Shape: ", postsavi.shape)
 
+    #TODO: difference images
+    #TODO: Thresholding
 
     print('--WRITING OUTPUT--')
-    
+    savedata(od, prenbr, preprofile)
 
     # Stop timer
     endtime1=datetime.datetime.now()
