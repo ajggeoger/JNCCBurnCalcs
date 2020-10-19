@@ -1,6 +1,6 @@
 {
     "TEST_1": {
-        "name": "S2A_20160314_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2A_20160314_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20160314",
         "granule": "T30VVJ",
@@ -9,7 +9,7 @@
         "validpix": "1016.9 KB"
     },
     "TEST_2": {
-        "name": "S2A_20160317_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20160317_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20160317",
         "granule": "T30VVJ",
@@ -18,7 +18,7 @@
         "validpix": "1 MB"
     },
     "TEST_3": {
-        "name": "S2A_20160510_lat57lon375_T30VVJ_ORB037_utm30n_osgb",
+        "name": "S2A_20160510_lat57lon375_T30VVJ_ORB037_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20160510",
         "granule": "T30VVJ",
@@ -27,7 +27,7 @@
         "validpix": "1002.7 KB"
     },
     "TEST_4": {
-        "name": "S2A_20160605_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20160605_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20160605",
         "granule": "T30VVJ",
@@ -36,7 +36,7 @@
         "validpix": "1015.7 KB"
     },
     "TEST_5": {
-        "name": "S2A_20160824_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20160824_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20160824",
         "granule": "T30VVJ",
@@ -45,7 +45,7 @@
         "validpix": "1015.9 KB"
     },
     "TEST_6": {
-        "name": "S2A_20170227_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2A_20170227_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20170227",
         "granule": "T30VVJ",
@@ -54,7 +54,7 @@
         "validpix": "1014.8 KB"
     },
     "TEST_7": {
-        "name": "S2A_20170401_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20170401_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20160401",
         "granule": "T30VVJ",
@@ -63,7 +63,7 @@
         "validpix": "1015.5 KB"
     },
     "TEST_8": {
-        "name": "S2A_20170408_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2A_20170408_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20170408",
         "granule": "T30VVJ",
@@ -72,7 +72,7 @@
         "validpix": "1014.8 KB"
     },
     "TEST_9": {
-        "name": "S2A_20170415_lat57lon375_T30VVJ_ORB037_utm30n_osgb",
+        "name": "S2A_20170415_lat57lon375_T30VVJ_ORB037_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20170415",
         "granule": "T30VVJ",
@@ -81,7 +81,7 @@
         "validpix": "1002 KB"
     },
     "TEST_10": {
-        "name": "S2A_20170501_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20170501_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20170501",
         "granule": "T30VVJ",
@@ -90,7 +90,7 @@
         "validpix": "1008.9 KB"
     },
     "TEST_11": {
-        "name": "S2A_20170505_lat57lon375_T30VVJ_ORB037_utm30n_osgb",
+        "name": "S2A_20170505_lat57lon375_T30VVJ_ORB037_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20170505",
         "granule": "T30VVJ",
@@ -99,7 +99,7 @@
         "validpix": "1003 KB"
     },
     "TEST_12": {
-        "name": "S2A_20170620_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20170620_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20170620",
         "granule": "T30VVJ",
@@ -108,7 +108,7 @@
         "validpix": "1015.4 KB"
     },
     "TEST_13": {
-        "name": "S2A_20180526_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20180526_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180526",
         "granule": "T30VVJ",
@@ -117,7 +117,7 @@
         "validpix": "1 MB"
     },
     "TEST_14": {
-        "name": "S2A_20180605_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2A_20180605_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180605",
         "granule": "T30VVJ",
@@ -126,7 +126,7 @@
         "validpix": "853.1 KB"
     },
     "TEST_15": {
-        "name": "S2B_20180607_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2B_20180607_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180607",
         "granule": "T30VVJ",
@@ -135,7 +135,7 @@
         "validpix": "1 MB"
     },
     "TEST_16": {
-        "name": "S2B_20180627_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2B_20180627_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180627",
         "granule": "T30VVJ",
@@ -144,7 +144,7 @@
         "validpix": "1 MB"
     },
     "TEST_17": {
-        "name": "S2B_20180630_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2B_20180630_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180630",
         "granule": "T30VVJ",
@@ -153,7 +153,7 @@
         "validpix": "1015.5 KB"
     },
     "TEST_18": {
-        "name": "S2A_20180702_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2A_20180702_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180702",
         "granule": "T30VVJ",
@@ -162,7 +162,7 @@
         "validpix": "1 MB"
     },
     "TEST_19": {
-        "name": "S2B_20180707_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2B_20180707_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20180707",
         "granule": "T30VVJ",
@@ -171,7 +171,7 @@
         "validpix": "1 MB"
     },
     "TEST_20": {
-        "name": "S2B_20190516_lat57lon375_T30VVJ_ORB123_utm30n_osgb",
+        "name": "S2B_20190516_lat57lon375_T30VVJ_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20190516",
         "granule": "T30VVJ",
@@ -180,7 +180,7 @@
         "validpix": "1 MB"
     },
     "TEST_21": {
-        "name": "S2A_20190627_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2A_20190627_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20190627",
         "granule": "T30VVJ",
@@ -189,7 +189,7 @@
         "validpix": "1 MB"
     },
     "TEST_22": {
-        "name": "S2A_20190826_lat57lon375_T30VVJ_ORB080_utm30n_osgb",
+        "name": "S2A_20190826_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref",
         "sensor": "S2A",
         "date": "20190826",
         "granule": "T30VVJ",
