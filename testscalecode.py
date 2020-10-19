@@ -11,7 +11,35 @@ Contributors:
 #import logging
 import os
 import datetime
+import json
+
 import rasterio
+
+def proclist(wd, jsonfile, testimages):
+    #print(wd)
+    with open(jsonfile) as json_file: 
+        data = json.load(json_file)
+    data   
+
+    outlist = []
+    for i in testimages:
+        #print(data[i])
+        #print(data[i]['name'])
+        a = data[i]['date']
+        year = a[0:4]
+        month = a[4:6]
+        day = a[6:]
+        imagepath = (year + '/' + month + '/' + day)
+        imagename = data[i]['name'] + '.tif'
+        paramlist = (imagename, imagepath, data[i]['granule'], data[i]['datafile'])
+        outlist.append(paramlist)
+
+    #print(len(filename))
+    #print(filename.count('_'))
+    #sensor, date, latlon, granule, orbit, utm, proj, mask, sharp, radiative, srefdem, stdsref = filename.split('_')
+    #print(sensor, granule)
+    return outlist
+    
 
 
 def pre(imagename):
@@ -117,51 +145,60 @@ if __name__ == "__main__":
     wd = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP'
     # Set output directory
     od = wd
+    # Set path to jsonfile of images
+    jsonfile = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/testimages_T30VVJ.json'
+    # Set testimages 
+    testimages = ['TEST_21','TEST_22']
+    #image = 'S2A_20190627_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref.tif'
+
+    # Get data
+    toprocess = proclist(wd, jsonfile, testimages)
+    print(toprocess)
     
-    # Set image 
-    # TODO: (improve on this using dict)
-    image = 'S2A_20190627_lat57lon375_T30VVJ_ORB080_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref.tif'
-    image_data = os.path.join(wd, image)
-
-    # Start timer
-    starttime1 = datetime.datetime.now()
-    print('--STARTING PROCESSING--')
-
-    print('--GETTING DATA--')
-    # pre-fire image
-    prered, prenir, preswir1, preswir2, preprofile = pre(image_data)
-    print(preprofile)
-    # post-fire image
-    #postred, postnir, postswir1, postswir2, postprofile = post(image_data)
     
-    print('--CALCULATING NBR--')
-    prenbr = nbr(preswir1, prenir)
-    print("Pre-NBR Shape: ", prenbr.shape)
-    #postnbr = nbr(postswir1, postnir)
-    #print("Post-NBR Shape: ", postnbr.shape)
+    #image_data = os.path.join(wd, toprocess[], toprocess[0])
+    #print(image_data)
 
-    print('--CALCULATING NBR2--')
-    prenbr2 = savi(preswir2, preswir1)
-    print("Pre-NBR2 Shape: ", prenbr2.shape)
-    #postnbr2 = nbr(postswir2, postswir1)
-    #print("Post-NBR2 Shape: ", postnbr.shape)
 
-    print('--CALCULATING SAVI--')
-    presavi = savi(prenir, prered)
-    print("Pre-SAVI Shape: ", presavi.shape)
-    #postsavi = savi(postnir, postred)
-    #print("Pre-SAVI Shape: ", postsavi.shape)
+    # # Start timer
+    # starttime1 = datetime.datetime.now()
+    # print('--STARTING PROCESSING--')
 
-    #TODO: difference images
-    #TODO: Thresholding
+    # print('--GETTING DATA--')
+    # # pre-fire image
+    # prered, prenir, preswir1, preswir2, preprofile = pre(image_data)
+    # print(preprofile)
+    # # post-fire image
+    # #postred, postnir, postswir1, postswir2, postprofile = post(image_data)
+    
+    # print('--CALCULATING NBR--')
+    # prenbr = nbr(preswir1, prenir)
+    # print("Pre-NBR Shape: ", prenbr.shape)
+    # #postnbr = nbr(postswir1, postnir)
+    # #print("Post-NBR Shape: ", postnbr.shape)
 
-    print('--WRITING OUTPUT--')
-    savedata(od, prenbr, preprofile)
+    # print('--CALCULATING NBR2--')
+    # prenbr2 = savi(preswir2, preswir1)
+    # print("Pre-NBR2 Shape: ", prenbr2.shape)
+    # #postnbr2 = nbr(postswir2, postswir1)
+    # #print("Post-NBR2 Shape: ", postnbr.shape)
 
-    # Stop timer
-    endtime1=datetime.datetime.now()
-    deltatime1=endtime1-starttime1
-    print(("Time to process:  {0}  hr:min:sec".format(deltatime1)))
+    # print('--CALCULATING SAVI--')
+    # presavi = savi(prenir, prered)
+    # print("Pre-SAVI Shape: ", presavi.shape)
+    # #postsavi = savi(postnir, postred)
+    # #print("Pre-SAVI Shape: ", postsavi.shape)
+
+    # #TODO: difference images
+    # #TODO: Thresholding
+
+    # print('--WRITING OUTPUT--')
+    # savedata(od, prenbr, preprofile)
+
+    # # Stop timer
+    # endtime1=datetime.datetime.now()
+    # deltatime1=endtime1-starttime1
+    # print(("Time to process:  {0}  hr:min:sec".format(deltatime1)))
 
 
 
