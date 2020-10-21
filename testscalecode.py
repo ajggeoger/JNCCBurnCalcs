@@ -15,6 +15,21 @@ import datetime
 import json
 
 import rasterio
+#from dask_rasterio import read_raster, write_raster
+
+
+
+def directorycheck(wd, od):
+    '''
+    Checks whether the supplied directories exist
+    '''
+    if os.path.isdir(wd) and os.path.isdir(od) == True:
+        pass
+    else:
+        print('--EXITING--')
+        print('one or more directories supplied do not exist')
+        sys.exit()
+
 
 def proclist(wd, jsonfile, testimages):
     '''
@@ -42,7 +57,12 @@ def proclist(wd, jsonfile, testimages):
     #sensor, date, latlon, granule, orbit, utm, proj, mask, sharp, radiative, srefdem, stdsref = filename.split('_')
     return outlist
     
-
+# def predask(imagename):
+#     red = read_raster(imagename, band=3)
+#     nir = read_raster(imagename, band=7)
+#     swir1 = read_raster(imagename, band=9)
+#     swir2 = read_raster(imagename, band=10)
+#     return red, nir, swir1, swir2
 
 def pre(imagename):
     '''
@@ -153,6 +173,7 @@ if __name__ == "__main__":
     # Set testimages 
     testimages = ['TEST_21','TEST_22']
     
+    directorycheck(wd, od)
 
     # Get data
     toprocess = proclist(wd, jsonfile, testimages)
@@ -184,75 +205,71 @@ if __name__ == "__main__":
         #image_data = os.path.join(wd, k[1], k[0])
         #print(image_data)
 
-    print('--GETTING DATA--')
     count = 1
 #j = ['a','b','c','d','e']
     while len(cleanlist) > 0:
+        print('--GETTING DATA--')
+
         if count == 1:
             postlist = cleanlist.pop()
             #print('post', post)
+            # post-fire image
+            postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(wd, postlist[1], postlist[0]))
+            #postred, postnir, postswir1, postswir2 = predask(os.path.join(wd, postlist[1], postlist[0]))
+        
+        
         count = 2
         prelist = cleanlist.pop()
-        #print('pre', pre)
+        
 
-        #PROCESSING
-        # post-fire image
-        postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(wd, postlist[1], postlist[0]))
+        with rasterio.open(os.path.join(wd, prelist[1], prelist[0])) as dataset:
+            print('PRE BURN IMAGE')
+            print('Name: ', dataset.name)
+            print('Count: ', dataset.count)
+            print('CRS: ', dataset.crs)
+            profile = dataset.profile.copy()
+
 
         # pre-fire image
         prered, prenir, preswir1, preswir2, preprofile = pre(os.path.join(wd, prelist[1], prelist[0]))
+        #prered, prenir, preswir1, preswir2 = predask(os.path.join(wd, prelist[1], prelist[0]))
 
-        print('--CALCULATING NBR--')
-        prenbr = nbr(preswir1, prenir)
+        #PROCESSING
+
+        #print('--CALCULATING NBR--')
+        #prenbr = nbr(preswir1, prenir)
         #print("Pre-NBR Shape: ", prenbr.shape)
-        postnbr = nbr(postswir1, postnir)
+        #postnbr = nbr(postswir1, postnir)
         #print("Post-NBR Shape: ", postnbr.shape)
-        dnbr = postnbr - prenbr
+        #dnbr = postnbr - prenbr
 
 
         print('--CALCULATING NBR2--')
-        prenbr2 = savi(preswir2, preswir1)
-        #print("Pre-NBR2 Shape: ", prenbr2.shape)
-        postnbr2 = nbr(postswir2, postswir1)
-        #print("Post-NBR2 Shape: ", postnbr.shape)
-        dnbr2 = postnbr2 - prenbr2
+        # Pre/post NBR2 difference
+        dnbr2 = nbr2(postswir2, postswir1) - nbr2(preswir2, preswir1)
 
 
         print('--CALCULATING SAVI--')
-        #presavi = savi(prenir, prered)
-        #print("Pre-SAVI Shape: ", presavi.shape)
-        #postsavi = savi(postnir, postred)
-        #print("Pre-SAVI Shape: ", postsavi.shape)
+        # Pre/post SAVI difference
         dsavi = savi(postnir, postred) - savi(prenir, prered)
 
 
-    # #TODO: Thresholding
+        #TODO: Thresholding
 
 
 
         if len(cleanlist) >= 1:
             postlist = prelist
-            #print('post', post)
+            postred, postnir, postswir1, postswir2, postprofile = prered, prenir, preswir1, preswir2, preprofile
     
-
-    
-    #while len(cleanlist) > 1:
-        
-        #postlist = cleanlist.pop()
-
-
-    
-
-        # print(preprofile)
-
-
 
 
     print('--WRITING OUTPUT--')
     #savedata(od, prenbr2, preprofile)
     savedata(od, dnbr2, preprofile, 'dnbr2')
     savedata(od, dsavi, preprofile, 'dsavi')
-
+    #prof = profile # reuse profile from tests/data/RGB.byte.tif...
+    #write_raster(os.path.join(od,'processed_image.tif'), dsavi, **prof)
 
     # Stop timer
     endtime1=datetime.datetime.now()
@@ -262,12 +279,6 @@ if __name__ == "__main__":
 
 
 # -- Notes --
-
-
-#output greater than 4GB therefore needs to be BigTIFF
-#s2prof.update(count=C, nodata=None, dtype=np.float32, BIGTIFF="IF_SAFER")
-#print((s2prof))
-
 
 #Combined: 
 #dSAVI still shows reasonable separability with the other classes (especially snow to no snow) though with a little overlap with no cloud to cloud (which did not exist in the Cairngorms image pair). 
