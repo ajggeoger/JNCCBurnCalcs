@@ -192,6 +192,7 @@ if __name__ == "__main__":
     #print(toprocess)
     print('Processing list constructed')
     logging.debug('Processing list constructed')
+    logging.debug(toprocess)
     
     #image_data = os.path.join(wd, toprocess[], toprocess[0])
     #print(image_data)
