@@ -8,7 +8,7 @@ Contributors:
 """
 
 # Imports
-import logging
+#import logging
 import os
 import sys
 import datetime
@@ -84,8 +84,6 @@ def pre(imagename):
         nir = dataset.read(7)
         swir1 = dataset.read(9)
         swir2 = dataset.read(10)
-
-        logging.debug('PRE image data read')
         return red, nir, swir1, swir2, profile
 
 
@@ -109,8 +107,6 @@ def post(imagename):
         nir = dataset.read(7)
         swir1 = dataset.read(9)
         swir2 = dataset.read(10)
-
-        logging.debug('POST image data read')
         return red, nir, swir1, swir2, profile
 
 
@@ -120,7 +116,6 @@ def nbr(swir1, nir):
     The NBR equation is the opposite way round to normal but this is as recommended by Filiponi: to make the behavior of the indices consistent i.e. the values of all the indices increase if fire has occurred. 
     '''
     nbr = ((swir1 - nir)/(swir1 + nir)).astype(rasterio.float32)
-    logging.debug('NBR calculated')
     return nbr
     
 
@@ -129,7 +124,6 @@ def nbr2(swir2, swir1):
     Calculates NBR2
     '''
     nbr2 = ((swir2 - swir1)/(swir2 + swir1)).astype(rasterio.float32)
-    logging.debug('NBR2 calculated')
     return nbr2
 
 def savi(nir, red, L = 0.5):
@@ -138,7 +132,6 @@ def savi(nir, red, L = 0.5):
     The default version of paramer L is set to 0.5. Specify a value in the function call to over-ride this.
     '''
     savi = (-1 * (1.5 * ((nir - red) / (nir + red + L)))).astype(rasterio.float32)
-    logging.debug('SAVI calculated')
     return savi
 
 
@@ -169,6 +162,8 @@ def savedata(od, nbr, profile, name):
 
 if __name__ == "__main__":
     
+    # TODO: make sure logging is in place
+
     # Set working directory
     wd = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP'
     # Set output directory
@@ -178,20 +173,12 @@ if __name__ == "__main__":
     # Set testimages 
     testimages = ['TEST_21','TEST_22']
     
-    # Set logfile 
-    logfile = os.path.join(od, (datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")+'-processing.log'))
-    logging.basicConfig(filename=logfile, level=logging.DEBUG, format='%(asctime)s %(message)s')
-
-    # Check directory validity
     directorycheck(wd, od)
-    logging.debug('Directories validated')
-
 
     # Get data
     toprocess = proclist(wd, jsonfile, testimages)
-    #print(toprocess)
-    print('Processing list constructed')
-    logging.debug('Processing list constructed')
+    print(toprocess)
+    
     
     #image_data = os.path.join(wd, toprocess[], toprocess[0])
     #print(image_data)
@@ -211,8 +198,6 @@ if __name__ == "__main__":
     if len(cleanlist) < 2:
             print('--EXITING--')
             print('Too few images to process in test')
-            logging.error('Too few images supplied for processing')
-
             sys.exit()
 
     #for k in reversed(cleanlist):
@@ -221,7 +206,7 @@ if __name__ == "__main__":
         #print(image_data)
 
     count = 1
-    #j = ['a','b','c','d','e']
+#j = ['a','b','c','d','e']
     while len(cleanlist) > 0:
         print('--GETTING DATA--')
 
@@ -237,12 +222,12 @@ if __name__ == "__main__":
         prelist = cleanlist.pop()
         
 
-        #with rasterio.open(os.path.join(wd, prelist[1], prelist[0])) as dataset:
-        #    print('PRE BURN IMAGE')
-        #    print('Name: ', dataset.name)
-        #    print('Count: ', dataset.count)
-        #    print('CRS: ', dataset.crs)
-        #    profile = dataset.profile.copy()
+        with rasterio.open(os.path.join(wd, prelist[1], prelist[0])) as dataset:
+            print('PRE BURN IMAGE')
+            print('Name: ', dataset.name)
+            print('Count: ', dataset.count)
+            print('CRS: ', dataset.crs)
+            profile = dataset.profile.copy()
 
 
         # pre-fire image
@@ -280,8 +265,6 @@ if __name__ == "__main__":
 
 
     print('--WRITING OUTPUT--')
-    logging.debug('Writing output file')
-
     #savedata(od, prenbr2, preprofile)
     savedata(od, dnbr2, preprofile, 'dnbr2')
     savedata(od, dsavi, preprofile, 'dsavi')
@@ -292,7 +275,6 @@ if __name__ == "__main__":
     endtime1=datetime.datetime.now()
     deltatime1=endtime1-starttime1
     print(("Time to process:  {0}  hr:min:sec".format(deltatime1)))
-    logging.debug("Time to process:  {0}  hr:min:sec".format(deltatime1))
 
 
 
