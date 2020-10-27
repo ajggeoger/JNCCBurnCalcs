@@ -12,7 +12,8 @@ import logging
 import os
 import sys
 import datetime
-import json
+import glob
+import pickle
 
 import rasterio
 #from dask_rasterio import read_raster, write_raster
@@ -29,6 +30,59 @@ def directorycheck(wd, od):
         print('--EXITING--')
         print('one or more directories supplied do not exist')
         sys.exit()
+
+
+
+def picklecheck(od):
+    '''
+    Check if pickle file exists
+    '''
+    if os.path.isfile(os.path.join(od, 'imagelist.pkl')):
+        # if it exists, load it as bob
+        infile = open(os.path.join(od, 'imagelist.pkl'),'rb')
+        proc_list = pickle.load(infile)
+        infile.close()
+    else:
+        # create bob if doesn't exist
+        proc_list = []
+    return proc_list
+
+def cleanlist(inputfiles, proc_list):
+    #----this works
+    count = 0
+    rem, index, x = [], [], []
+    #print('INPUTFILES', inputfiles)
+    #print('BOB', proc_list)
+
+    #print(aa)
+    for f in inputfiles:
+        count +=1
+        index.append(count)
+        for e in proc_list:
+            if e[0]==f[0]:
+                rem.append(count)
+    #print(rem, index)
+    p = [x for x in index if x not in rem]
+    #print(p)
+    res_list = [inputfiles[i-1] for i in (p)] 
+    print(res_list)
+    return res_list
+
+
+def getdatalist(wd, proc_list):
+    inputfiles = []
+
+    for r, d, f in os.walk(wd):
+        for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
+            #(imagename, imagepath, granule, size)
+            size = (os.stat(os.path.join(r, name)).st_size)/(1024*1024*1024)
+            paramlist = (name, r, name.split('_')[3], size) # os.path.join(r, name)
+            inputfiles.append(paramlist)
+
+    # call cleaning function
+    res_list = cleanlist(inputfiles, proc_list)
+
+    return res_list 
 
 
 def proclist(wd, jsonfile, testimages):
@@ -174,9 +228,9 @@ if __name__ == "__main__":
     # Set output directory
     od = wd
     # Set path to jsonfile of images
-    jsonfile = '/home/al/sdaDocuments/Code/geoger/github/JNCCBurnCalcs/testimages_T30VVJ.json'
+    #jsonfile = '/home/al/sdaDocuments/Code/geoger/github/JNCCBurnCalcs/testimages_T30VVJ.json'
     # Set testimages 
-    testimages = ['TEST_21','TEST_22']
+    #testimages = ['TEST_21','TEST_22']
     
     # Set logfile 
     logfile = os.path.join(od, (datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")+'-processing.log'))
@@ -187,8 +241,12 @@ if __name__ == "__main__":
     logging.debug('Directories validated')
 
 
-    # Get data
-    toprocess = proclist(wd, jsonfile, testimages)
+    # Get data and list of processed files
+    proc_list = picklecheck(od)
+    #toprocess = proclist(wd, jsonfile, testimages)
+    toprocess = getdatalist(wd, proc_list)
+
+
     #print(toprocess)
     print('Processing list constructed')
     logging.debug('Processing list constructed')
@@ -204,9 +262,14 @@ if __name__ == "__main__":
 
 
     cleanlist = []
+#    for j in toprocess:
+#        if 'GB' in j[3]:
+#            cleanlist.append(j)
+
     for j in toprocess:
-        if 'GB' in j[3]:
+        if j[3] > 1:
             cleanlist.append(j)
+
 
     # If too few images for comparison, exit the program
     if len(cleanlist) < 2:
@@ -221,6 +284,9 @@ if __name__ == "__main__":
         #image_data = os.path.join(wd, k[1], k[0])
         #print(image_data)
 
+
+    checklist = cleanlist
+
     count = 1
     #j = ['a','b','c','d','e']
     while len(cleanlist) > 0:
@@ -228,9 +294,9 @@ if __name__ == "__main__":
 
         if count == 1:
             postlist = cleanlist.pop()
-            #print('post', post)
+            print('postlist: ', postlist)
             # post-fire image
-            postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(wd, postlist[1], postlist[0]))
+            postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(postlist[1], postlist[0]))
             #postred, postnir, postswir1, postswir2 = predask(os.path.join(wd, postlist[1], postlist[0]))
         
         
@@ -247,7 +313,7 @@ if __name__ == "__main__":
 
 
         # pre-fire image
-        prered, prenir, preswir1, preswir2, preprofile = pre(os.path.join(wd, prelist[1], prelist[0]))
+        prered, prenir, preswir1, preswir2, preprofile = pre(os.path.join(prelist[1], prelist[0]))
         #prered, prenir, preswir1, preswir2 = predask(os.path.join(wd, prelist[1], prelist[0]))
 
         #PROCESSING
@@ -288,6 +354,11 @@ if __name__ == "__main__":
     savedata(od, dsavi, preprofile, 'dsavi')
     #prof = profile # reuse profile from tests/data/RGB.byte.tif...
     #write_raster(os.path.join(od,'processed_image.tif'), dsavi, **prof)
+
+    # pickle bob
+    #outfile = open(os.path.join(od, 'bob.pkl'),'wb')
+    #pickle.dump(bob,outfile)
+    #outfile.close()
 
     # Stop timer
     endtime1=datetime.datetime.now()
