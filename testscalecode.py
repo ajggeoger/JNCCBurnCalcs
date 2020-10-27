@@ -7,19 +7,19 @@ Contributors:
 
 """
 
-# Imports
+# --- Imports ---
 import logging
 import os
 import sys
 import datetime
 import glob
 import pickle
+import copy
 
 import rasterio
-#from dask_rasterio import read_raster, write_raster
 
 
-
+# --- Functions ---
 def directorycheck(wd, od):
     '''
     Checks whether the supplied directories exist
@@ -47,6 +47,7 @@ def picklecheck(od):
         proc_list = []
     return proc_list
 
+
 def cleanlist(inputfiles, proc_list):
     #----this works
     count = 0
@@ -61,12 +62,13 @@ def cleanlist(inputfiles, proc_list):
         for e in proc_list:
             if e[0]==f[0]:
                 rem.append(count)
-    #print(rem, index)
+    
+    #print('REM: INDEX', rem, index)
     p = [x for x in index if x not in rem]
     #print(p)
     res_list = [inputfiles[i-1] for i in (p)] 
-    print(res_list)
-    return res_list
+    #print('RESLIST', res_list[::-1])
+    return res_list #[::-1]
 
 
 def getdatalist(wd, proc_list):
@@ -76,40 +78,41 @@ def getdatalist(wd, proc_list):
         for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
             #(imagename, imagepath, granule, size)
             size = (os.stat(os.path.join(r, name)).st_size)/(1024*1024*1024)
-            paramlist = (name, r, name.split('_')[3], size) # os.path.join(r, name)
+            paramlist = [name, r, name.split('_')[3], size, name.split('_')[1]] # os.path.join(r, name)
             inputfiles.append(paramlist)
-
+    
+    inputfiles.sort(key=lambda x:x[3])
     # call cleaning function
     res_list = cleanlist(inputfiles, proc_list)
 
-    return res_list 
+    return res_list
 
 
-def proclist(wd, jsonfile, testimages):
-    '''
-    creates a list of images for testing. 
-    Takes in a working directory path, a json file of all test images,and a list of which images to process from the json.
-    Returns a list of lists stating file names, paths and sizes.
-    '''
-    # TODO: Have this/a function read the files from the data directory in the operational code.... 
-    with open(jsonfile) as json_file: 
-        data = json.load(json_file)
-    data   
+# def proclist(wd, jsonfile, testimages):
+#     '''
+#     creates a list of images for testing. 
+#     Takes in a working directory path, a json file of all test images,and a list of which images to process from the json.
+#     Returns a list of lists stating file names, paths and sizes.
+#     '''
+#     # TODO: Have this/a function read the files from the data directory in the operational code.... 
+#     with open(jsonfile) as json_file: 
+#         data = json.load(json_file)
+#     data   
 
-    outlist = []
-    for i in testimages:
-        a = data[i]['date']
-        year = a[0:4]
-        month = a[4:6]
-        day = a[6:]
-        imagepath = (year + '/' + month + '/' + day)
-        imagename = data[i]['name'] + '.tif'
-        paramlist = (imagename, imagepath, data[i]['granule'], data[i]['datafile'])
-        outlist.append(paramlist)
+#     outlist = []
+#     for i in testimages:
+#         a = data[i]['date']
+#         year = a[0:4]
+#         month = a[4:6]
+#         day = a[6:]
+#         imagepath = (year + '/' + month + '/' + day)
+#         imagename = data[i]['name'] + '.tif'
+#         paramlist = (imagename, imagepath, data[i]['granule'], data[i]['datafile'])
+#         outlist.append(paramlist)
 
-    #print(filename.count('_'))
-    #sensor, date, latlon, granule, orbit, utm, proj, mask, sharp, radiative, srefdem, stdsref = filename.split('_')
-    return outlist
+#     #print(filename.count('_'))
+#     #sensor, date, latlon, granule, orbit, utm, proj, mask, sharp, radiative, srefdem, stdsref = filename.split('_')
+#     return outlist
     
 # def predask(imagename):
 #     red = read_raster(imagename, band=3)
@@ -127,7 +130,7 @@ def pre(imagename):
     with rasterio.open(imagename) as dataset:
         print('PRE BURN IMAGE')
         print('Name: ', dataset.name)
-        print('Count: ', dataset.count)
+        print('Bands: ', dataset.count)
         print('Width: ', dataset.width)
         print('Height: ', dataset.height)
         print('CRS: ', dataset.crs)
@@ -152,7 +155,7 @@ def post(imagename):
     with rasterio.open(imagename) as dataset:
         print('POST BURN IMAGE')
         print('Name: ', dataset.name)
-        print('Count: ', dataset.count)
+        print('Bands: ', dataset.count)
         print('Width: ', dataset.width)
         print('Height: ', dataset.height)
         print('CRS: ', dataset.crs)
@@ -224,7 +227,7 @@ def savedata(od, nbr, profile, name):
 if __name__ == "__main__":
     
     # Set working directory
-    wd = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP'
+    wd = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/2019'
     # Set output directory
     od = wd
     # Set path to jsonfile of images
@@ -285,7 +288,7 @@ if __name__ == "__main__":
         #print(image_data)
 
 
-    checklist = cleanlist
+    checklist = copy.deepcopy(cleanlist)
 
     count = 1
     #j = ['a','b','c','d','e']
@@ -294,7 +297,7 @@ if __name__ == "__main__":
 
         if count == 1:
             postlist = cleanlist.pop()
-            print('postlist: ', postlist)
+            #print('postlist: ', postlist)
             # post-fire image
             postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(postlist[1], postlist[0]))
             #postred, postnir, postswir1, postswir2 = predask(os.path.join(wd, postlist[1], postlist[0]))
@@ -356,9 +359,15 @@ if __name__ == "__main__":
     #write_raster(os.path.join(od,'processed_image.tif'), dsavi, **prof)
 
     # pickle bob
-    #outfile = open(os.path.join(od, 'bob.pkl'),'wb')
-    #pickle.dump(bob,outfile)
-    #outfile.close()
+    checklist.pop()
+    outfile = open(os.path.join(od, 'imagelist.pkl'),'wb')
+    pickle.dump(checklist,outfile)
+    outfile.close()
+
+# TODO fix this export by building 'processed' list
+# TODO work out how to process the same granule
+# TODO export to textfile
+
 
     # Stop timer
     endtime1=datetime.datetime.now()
