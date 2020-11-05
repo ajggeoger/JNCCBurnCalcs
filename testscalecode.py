@@ -292,33 +292,19 @@ def threshold_imgs(dsavi, postnbr, dnbr2, thresholds):
     thresholds -- dictionary of thresholds - can be changed in __main__
     '''
 
-    #Open input image and polygon dataset
-    # Read image
-    #s2 = rasterio.open(os.path.join(image_dir,image))
-
-    #profile = s2.profile.copy()
-
-    #Set the threshold
-
-    # for multiple indices threshold
-    # read in bands required 2 postnbr; 3 dnbr; 6 dnbr2; 15 dcsi; 21 dsavi 
-    #indicesArray = s2.read([2,3,6,15,21])
-
-    # read in a single band as a template for the output reclassified image
-    #band1 = s2.read(1)
+    # Create a copy of the postnbr image and reset all values in output raster to 0
     reclassArray = postnbr.copy()
-    # reset all values in output raster to 0 as otherwise pixel values not reclassed by the condition below may retain value from prenbr (band1)
     reclassArray[np.where(reclassArray != 0)] = 0
 
     # reclassify the raster
     # in this case where dsavi is greater than the median and post fire image NBR is greater than the mean 
     reclassArray[np.where((dsavi>=(thresholds['threshdsavi'])) & (postnbr>=(thresholds['threshpostnbr'])))] = 1 
+    
     # then attempt to solve issue of edges of clouds being falsely identified which have high values in dnbr2
+    # rasterio function to exclude clumps of pixels smaller than 3.  Diagonally joined pixels are allowed.
+    
     reclassArray[np.where(dnbr2>=(thresholds['threshdnbr2']))] = 0
     
-    # dSAVI >= 0.2853 AND NBRpost >= 0.2395 
-
-    # rasterio function to exclude clumps of pixels smaller than 3.  Diagonally joined pixels are allowed.
     sievedArray = rasterio.features.sieve(reclassArray.astype(rasterio.uint8), size=3, connectivity=8)
     
     return sievedArray
@@ -343,7 +329,7 @@ def threshold_imgs(dsavi, postnbr, dnbr2, thresholds):
     """
 
 
-def savedata(od, nbr, profile, name):
+def savedata(od, datafile, profile, name, prename, postname):
     '''
     Saves spatial data 
     
@@ -356,29 +342,49 @@ def savedata(od, nbr, profile, name):
     profile -- spatial data profile for rasterio
     name -- name of the dataset
     '''
+    #create output base name
+    prename = prename.split('_')
+    postname = postname.split('_')
+
     kwds = profile
+    
+    if name != 'burnseed':
 
-    # Change the format driver for the destination dataset to
-    #kwds['driver'] = 'GTiff'
-    kwds['dtype'] = 'float32'
-    kwds['count'] = 1
+        # Change the format driver for the destination dataset to
+        #kwds['driver'] = 'GTiff'
+        kwds['dtype'] = 'float32'
+        kwds['count'] = 1
 
-    # Add GeoTIFF-specific keyword arguments.
-    #kwds['tiled'] = True
-    #kwds['blockxsize'] = 256
-    #kwds['blockysize'] = 256
-    #kwds['compress'] = 'JPEG'
-    outname = name + '.tif'
+        # Add GeoTIFF-specific keyword arguments.
+        #kwds['tiled'] = True
+        #kwds['blockxsize'] = 256
+        #kwds['blockysize'] = 256
+        #kwds['compress'] = 'JPEG'
+        outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '_' + name + '.tif'
 
-    with rasterio.open((os.path.join(od, outname)), 'w', **kwds) as dst_dataset:
+        with rasterio.open((os.path.join(od, outname)), 'w', **kwds) as dst_dataset:
         # Write data to the destination dataset.
-        dst_dataset.write(nbr, 1)
+            dst_dataset.write(datafile, 1)
 
     # TODO: Flexible output name
     # TODO: Multiple band write? 
     # TODO: np.seterr(divide='ignore', invalid = 'ignore' ) #ignore errors from calculating indices/ ratios#over= 'ignore', under = 'ignore' 
+    else:
+        #Export the thresholded raster
+        # export the classified array, converting to an integer
+        kwds.update(dtype=rasterio.uint8,
+            count=1,
+            compress='lzw')
+        outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '_' + name + '.tif'
+
+        with rasterio.open(os.path.join(od, outname), 'w', **kwds) as dst_dataset:
+            dst_dataset.write(datafile, 1)
 
 
+
+# ======================================================================    
+# ========================== MAIN ======================================
+# ======================================================================
 
 if __name__ == "__main__":
     
@@ -425,6 +431,7 @@ if __name__ == "__main__":
 #        if 'GB' in j[3]:
 #            cleanlist.append(j)
 
+    # Look for full scenes: remove to process all images (what is effect of null data?)
     for j in toprocess:
         if j[3] > 1:
             cleanlist.append(j)
@@ -464,46 +471,63 @@ if __name__ == "__main__":
         
         count = 2
         prelist = cleanlist.pop()
-        
+        print(prelist[2], postlist[2])
 
-        #with rasterio.open(os.path.join(wd, prelist[1], prelist[0])) as dataset:
-        #    print('PRE BURN IMAGE')
-        #    print('Name: ', dataset.name)
-        #    print('Count: ', dataset.count)
-        #    print('CRS: ', dataset.crs)
-        #    profile = dataset.profile.copy()
+
+            #with rasterio.open(os.path.join(wd, prelist[1], prelist[0])) as dataset:
+            #    print('PRE BURN IMAGE')
+            #    print('Name: ', dataset.name)
+            #    print('Count: ', dataset.count)
+            #    print('CRS: ', dataset.crs)
+            #    profile = dataset.profile.copy()
 
 
         # pre-fire image
         prered, prenir, preswir1, preswir2, preprofile = pre(os.path.join(prelist[1], prelist[0]))
-        #prered, prenir, preswir1, preswir2 = predask(os.path.join(wd, prelist[1], prelist[0]))
+            #prered, prenir, preswir1, preswir2 = predask(os.path.join(wd, prelist[1], prelist[0]))
+        
+        if prelist[2]==postlist[2]:
 
-        #PROCESSING
+            #print('STOP NOW')
+            #print(prelist[0], postlist[0])
 
-        print('--CALCULATING NBR--')
-        #prenbr = nbr(preswir1, prenir)
-        #print("Pre-NBR Shape: ", prenbr.shape)
-        postnbr = nbr(postswir1, postnir)
-        #print("Post-NBR Shape: ", postnbr.shape)
-        #dnbr = postnbr - prenbr
+            #PROCESSING
 
-
-        print('--CALCULATING NBR2--')
-        # Pre/post NBR2 difference
-        dnbr2 = nbr2(postswir2, postswir1) - nbr2(preswir2, preswir1)
-
-
-        print('--CALCULATING SAVI--')
-        # Pre/post SAVI difference
-        dsavi = savi(postnir, postred) - savi(prenir, prered)
+            print('--CALCULATING NBR--')
+            #prenbr = nbr(preswir1, prenir)
+            #print("Pre-NBR Shape: ", prenbr.shape)
+            postnbr = nbr(postswir1, postnir)
+            #print("Post-NBR Shape: ", postnbr.shape)
+            #dnbr = postnbr - prenbr
 
 
-        #TODO: Thresholding
-        print('--CALCULATING THRESHOLDING--')
-        thresholds = {'threshdsavi': 0.2853, 'threshpostnbr': 0.2395, 'threshdnbr2': 0.8}
-        #print(thresholds)
-        #print(thresholds['threshpostnbr'])
-        alltheburns = threshold_imgs(dsavi, postnbr, dnbr2, thresholds)
+            print('--CALCULATING NBR2--')
+            # Pre/post NBR2 difference
+            dnbr2 = nbr2(postswir2, postswir1) - nbr2(preswir2, preswir1)
+
+
+            print('--CALCULATING SAVI--')
+            # Pre/post SAVI difference
+            dsavi = savi(postnir, postred) - savi(prenir, prered)
+
+
+            # Thresholding
+            print('--CALCULATING THRESHOLDING--')
+            thresholds = {'threshdsavi': 0.2853, 'threshpostnbr': 0.2395, 'threshdnbr2': 0.8, 'type': 'global'}
+            print('Thresholds used: ', thresholds)
+            #print(thresholds)
+            #print(thresholds['threshpostnbr'])
+            burnseed = threshold_imgs(dsavi, postnbr, dnbr2, thresholds)
+
+
+            # Save data
+            print('--SAVING DATA--')
+            savedata(od, postnbr, preprofile, 'postnbr', prelist[0], postlist[0])
+            savedata(od, dnbr2, preprofile, 'dnbr2', prelist[0], postlist[0])
+            savedata(od, dsavi, preprofile, 'dsavi', prelist[0], postlist[0])
+            savedata(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
+        
+
 
 
         if len(cleanlist) >= 1:
@@ -515,35 +539,19 @@ if __name__ == "__main__":
     print('--WRITING OUTPUT--')
     logging.debug('Writing output file')
 
-    #savedata(od, prenbr2, preprofile)
-    #savedata(od, dnbr2, preprofile, 'dnbr2')
-    #savedata(od, dsavi, preprofile, 'dsavi')
-    #savedata(od, alltheburns, preprofile, 'burnseed')
-    
-    
-    #Export the thresholded raster
-    # export the classified array, converting to an integer
-    preprofile.update(dtype=rasterio.uint8,
-        count=1,
-        compress='lzw')  
-    outImage = 'Test_core_burns.tif'
-    with rasterio.open(os.path.join(od, outImage), 'w', **preprofile) as dst:
-        dst.write(alltheburns, 1)
-    
-    
-    
-    
-    
-    
-    
-    #prof = profile # reuse profile from tests/data/RGB.byte.tif...
-    #write_raster(os.path.join(od,'processed_image.tif'), dsavi, **prof)
 
-    # pickle bob
+    # pickle file
     checklist.pop()
-    outfile = open(os.path.join(od, 'imagelist.pkl'),'wb')
-    pickle.dump(checklist,outfile)
-    outfile.close()
+    #outfile = 
+    with open(os.path.join(od, 'imagelist.pkl'),'wb') as outfile:
+        pickle.dump(checklist,outfile)
+    #outfile.close()
+    
+    # text file
+    with open(os.path.join(od, 'imagelist.txt'), 'w') as outfiletxt:
+        outfiletxt.writelines("%s" % line for line in checklist)
+        # TODO: write data to the file
+    # After leaving the above block of code, the file is closed    
 
 # TODO fix this export by building 'processed' list
 # TODO work out how to process the same granule
