@@ -32,6 +32,8 @@ import numpy as np
 import rasterio
 from rasterio.features import sieve
 
+import config # config.pyconfiguration parameters
+
 
 # --- Functions ---
 def directorycheck(wd, od):
@@ -357,10 +359,10 @@ def savedata(od, datafile, profile, name, prename, postname):
 if __name__ == "__main__":
     
     # Set working directory
-    wd = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/2019'
+    wd = config.ARD_WRKDIR
     
     # Set output directory
-    od = wd
+    od = config.GWS_DATA
     
     # Set logfile 
     logfile = os.path.join(od, (datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")+'-processing.log'))
