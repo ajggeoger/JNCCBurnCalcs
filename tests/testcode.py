@@ -116,12 +116,12 @@ def getdatalist(wd, proc_list):
     
     inputfiles = []
 
-    for r, d, f in os.walk(wd):
+    for r, d, f in os.walk(wd, followlinks=True):
         for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
             # create [imagename, imagepath, granule, size, date]
             size = (os.stat(os.path.join(r, name)).st_size)/(1024*1024*1024)
             paramlist = [name, r, name.split('_')[3], size, name.split('_')[1]] # os.path.join(r, name)
-            print(paramlist)
+            #print(paramlist)
             inputfiles.append(paramlist)
     
     # sort by granule and date
@@ -131,6 +131,36 @@ def getdatalist(wd, proc_list):
     res_list = cleanlistfunc(inputfiles2, proc_list)
     # print(res_list)
     return res_list
+
+
+def countfiles(wd):
+    '''
+    Walks the supplied directory and counts files to be processed in each folder
+
+    Return:
+    Number of images to be processed in each folder in wd
+
+    Keyword arguments:
+    wd -- working directory
+    '''
+    fileno = []
+    for r, d, f in os.walk(wd, followlinks=True):
+        for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
+        # os.walk method is used to travel throught the wd.
+            fileno.append([r, len(f)])
+    
+    unique = [] 
+    templist = []
+
+    for item in fileno:
+        if item[0] in templist:
+            continue
+        else:
+            unique.append(item)
+            templist.append(item[0])
+            print(item)
+                    
+    return fileno
 
 
 def pre(imagename):
@@ -340,6 +370,8 @@ if __name__ == "__main__":
     directorycheck(wd, od)
     logging.debug('Directories validated')
 
+    # Get count of files
+    file_count = countfiles(wd)
 
     # Get data and list of processed files
     proc_list = picklecheck(od)

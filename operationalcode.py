@@ -116,7 +116,7 @@ def getdatalist(wd, proc_list):
     
     inputfiles = []
 
-    for r, d, f in os.walk(wd):
+    for r, d, f in os.walk(wd, followlinks=True):
         for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
             # create [imagename, imagepath, granule, size, date]
             size = (os.stat(os.path.join(r, name)).st_size)/(1024*1024*1024)
