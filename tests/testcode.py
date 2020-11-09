@@ -32,7 +32,7 @@ import numpy as np
 import rasterio
 from rasterio.features import sieve
 
-import config # config.pyconfiguration parameters
+import config # config.py configuration parameters
 
 
 # --- Functions ---

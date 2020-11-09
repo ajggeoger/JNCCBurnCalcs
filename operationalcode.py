@@ -32,6 +32,8 @@ import numpy as np
 import rasterio
 from rasterio.features import sieve
 
+import config # config.py configuration parameters
+
 
 # --- Functions ---
 def directorycheck(wd, od):
@@ -130,6 +132,36 @@ def getdatalist(wd, proc_list):
     res_list = cleanlistfunc(inputfiles2, proc_list)
     # print(res_list)
     return res_list
+
+
+def countfiles(wd):
+    '''
+    Walks the supplied directory and counts files to be processed in each folder
+
+    Return:
+    Number of images to be processed in each folder in wd
+
+    Keyword arguments:
+    wd -- working directory
+    '''
+    fileno = []
+    for r, d, f in os.walk(wd, followlinks=True):
+        for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
+        # os.walk method is used to travel throught the wd.
+            fileno.append([r, len(f)])
+    
+    unique = [] 
+    templist = []
+
+    for item in fileno:
+        if item[0] in templist:
+            continue
+        else:
+            unique.append(item)
+            templist.append(item[0])
+            print(item)
+                    
+    return fileno
 
 
 def pre(imagename):
@@ -326,10 +358,10 @@ def savedata(od, datafile, profile, name, prename, postname):
 if __name__ == "__main__":
     
     # Set working directory
-    wd = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/2019'
+    wd = config.ARD_WRKDIR
     
     # Set output directory
-    od = wd
+    od = config.GWS_DATA
     
     # Set logfile 
     logfile = os.path.join(od, (datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")+'-processing.log'))
@@ -339,6 +371,8 @@ if __name__ == "__main__":
     directorycheck(wd, od)
     logging.debug('Directories validated')
 
+    # Get count of files
+    #file_count = countfiles(wd)
 
     # Get data and list of processed files
     proc_list = picklecheck(od)
