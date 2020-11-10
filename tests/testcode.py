@@ -145,23 +145,37 @@ def countfiles(wd):
     Keyword arguments:
     wd -- working directory
     '''
-    fileno = []
-    for r, d, f in os.walk(wd, followlinks=True):
-        for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
-        # os.walk method is used to travel throught the wd.
-            fileno.append([r, len(f)])
+    # fileno = []
+    # for r, d, f in os.walk(wd, followlinks=True):
+    #     for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
+    #     # os.walk method is used to travel throught the wd.
+    #         fileno.append([r, len(f)])
     
-    unique = [] 
-    templist = []
 
-    for item in fileno:
-        if item[0] in templist:
-            continue
-        else:
-            unique.append(item)
-            templist.append(item[0])
-            print(item)
-                    
+    # unique = [] 
+    # templist = []
+
+    # for item in fileno:
+    #     if item[0] in templist:
+    #         continue
+    #     else:
+    #         unique.append(item)
+    #         templist.append(item[0])
+    #         print(item)
+
+
+    fileno = []
+
+    for r, d, f in os.walk(wd, followlinks=True):
+        mycount = []
+        for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
+            #print(r, name)
+            mycount.append([name])
+        fileno.append([r, len(mycount)])
+        print(r, len(mycount))
+    
+    #print(fileno)
+
     return fileno
 
 
@@ -394,7 +408,9 @@ if __name__ == "__main__":
     for j in toprocess:
         if j[3] > 1:
             cleanlist.append(j)
-
+    
+    # Get total number of files to process
+    tot2process = len(cleanlist)
 
     # If too few images for comparison, exit the program
     if len(cleanlist) < 2:
@@ -408,9 +424,10 @@ if __name__ == "__main__":
 
     
     count = 1
+    runno = 0
     # while len(cleanlist) > 0:
     #     print('--GETTING DATA--')
-
+    #     runno = runno+1
     #     if count == 1:
     #         postlist = cleanlist.pop()
     #         #print('postlist: ', postlist)
@@ -458,13 +475,14 @@ if __name__ == "__main__":
     #         savedata(od, dnbr2, preprofile, 'dnbr2', prelist[0], postlist[0])
     #         savedata(od, dsavi, preprofile, 'dsavi', prelist[0], postlist[0])
     #         savedata(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
+    #         print('Processed', runno, 'of', tot2process, 'files')
         
 
 
     #     if len(cleanlist) >= 1:
     #         postlist = prelist
     #         postred, postnir, postswir1, postswir2, postprofile = prered, prenir, preswir1, preswir2, preprofile
-    
+        
 
 
     print('--WRITING OUTPUT--')
