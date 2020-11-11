@@ -386,8 +386,9 @@ if __name__ == "__main__":
     directorycheck(wd, od)
     logging.debug('Directories validated')
 
-    # Get count of files
-    file_count = countfiles(wd)
+    # Get count of files (comment on-off at present)
+    # TODO - add config toggle
+    #file_count = countfiles(wd)
 
     # Get data and list of processed files
     proc_list = picklecheck(od)
