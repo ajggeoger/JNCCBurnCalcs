@@ -35,7 +35,5 @@ The code is presented as a single script (operationalcode.py) and configuration 
 
 ## ToDo
 * Add region growing code
-* Add to config.py a method to more easily change the thresholding values
 * Investigate and add more robust error capturing to the code
-* Add to config.py to easily toggle the file count function on and off
 * Investigate the use of parallel processing (either on the science server using tools such as dask or on the SLURM cluster batch compute on JASMIN)

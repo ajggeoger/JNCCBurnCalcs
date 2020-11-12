@@ -104,7 +104,7 @@ def cleanlistfunc(inputfiles, proc_list):
     return res_list #[::-1]
 
 
-def getdatalist(wd, proc_list):
+def getdatalist(wd, proc_list, grantoproc, months_out):
     '''
     Walks the supplied directory and finds the required imagery
 
@@ -122,8 +122,11 @@ def getdatalist(wd, proc_list):
         for name in glob.fnmatch.filter(f, '*vmsk_sharp_rad_srefdem_stdsref.tif'):
             # create [imagename, imagepath, granule, size, date]
             size = (os.stat(os.path.join(r, name)).st_size)/(1024*1024*1024)
-            paramlist = [name, r, name.split('_')[3], size, name.split('_')[1]] # os.path.join(r, name)
-            inputfiles.append(paramlist)
+            if name.split('_')[1][4:6] not in months_out:
+                if name.split('_')[3] in grantoproc:
+                    paramlist = [name, r, name.split('_')[3], size, name.split('_')[1]] # os.path.join(r, name)
+                    print(paramlist)
+                    inputfiles.append(paramlist)
     
     # sort by granule and date
     inputfiles2 = sorted(sorted(inputfiles, key = lambda x : x[4]), key = lambda x : x[2], reverse = False)
@@ -371,13 +374,14 @@ if __name__ == "__main__":
     directorycheck(wd, od)
     logging.debug('Directories validated')
 
-    # Get count of files
-    #file_count = countfiles(wd)
+    # Get count of files (toggle on-off set in config file)
+    if config.FILECOUNT == 'on':
+        file_count = countfiles(wd)
 
     # Get data and list of processed files
+    # First call in any file names that have een processed. Then get unprocessed files, for Scotland, ignoring certain months
     proc_list = picklecheck(od)
-    toprocess = getdatalist(wd, proc_list)
-
+    toprocess = getdatalist(wd, proc_list, config.PROC_GRANULES, config.MONTHS_OUT)
 
     print('Processing list constructed')
     logging.debug('Processing list constructed')
