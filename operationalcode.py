@@ -307,7 +307,7 @@ def threshold_imgs(dsavi, postnbr, dnbr2, thresholds):
     return sievedArray
 
 
-def savedata(od, datafile, profile, name, prename, postname):
+def saveraster(od, datafile, profile, name, prename, postname):
     '''
     Saves spatial data 
     
@@ -457,10 +457,10 @@ if __name__ == "__main__":
 
             # Save data
             print('--SAVING DATA--')
-            savedata(od, postnbr, preprofile, 'postnbr', prelist[0], postlist[0])
-            savedata(od, dnbr2, preprofile, 'dnbr2', prelist[0], postlist[0])
-            savedata(od, dsavi, preprofile, 'dsavi', prelist[0], postlist[0])
-            savedata(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
+            saveraster(od, postnbr, preprofile, 'postnbr', prelist[0], postlist[0])
+            saveraster(od, dnbr2, preprofile, 'dnbr2', prelist[0], postlist[0])
+            saveraster(od, dsavi, preprofile, 'dsavi', prelist[0], postlist[0])
+            saveraster(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
         
 
 
@@ -490,7 +490,3 @@ if __name__ == "__main__":
     deltatime1=endtime1-starttime1
     print(("Time to process:  {0}  hr:min:sec".format(deltatime1)))
     logging.debug("Time to process:  {0}  hr:min:sec".format(deltatime1))
-
-
-
-# TODO: np.seterr(divide='ignore', invalid = 'ignore' ) -- ignore errors from calculating indices/ ratios

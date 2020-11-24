@@ -31,6 +31,7 @@ import copy
 import numpy as np
 import rasterio
 from rasterio.features import sieve
+import geopandas as gpd
 
 import config # config.py configuration parameters
 
@@ -180,8 +181,50 @@ def countfiles(wd):
 
     return fileno
 
+def getlandmask(imagename):
+    '''
+    Opens and reads the land mask dataset. 
+    Takes in a path to a .tif file.
+    
+    Return:
+    Individual bands and the image profile.
 
-def pre(imagename):
+    Keyword arguments:
+    imagename -- the path to the image to be processed
+    '''
+    
+    with rasterio.open(imagename) as dataset:
+        print('LOADING LANDMASK')
+        print('Name: ', dataset.name)
+        print('CRS: ', dataset.crs)
+
+        landmask = dataset.read(1)
+
+        logging.debug('landmask data read')
+        return landmask
+
+
+def getcloudmask(cloudname):
+        #cloudmask
+        with rasterio.open(cloudname) as clouddataset:
+            cloudin = clouddataset.read(1)
+
+        new_mask = np.zeros((cloudin.shape))
+        cloud_index = np.nonzero(cloudin < 1)
+        new_mask[cloud_index[0], cloud_index[1]] = 1
+        
+        return new_mask
+
+
+def maskify(image, cloudmask): #, landmask):
+    #pass
+    # TODO: LANDMASK
+    maskedimage = image * cloudmask
+    #logging.debug('masking complete')
+    return maskedimage
+
+
+def pre(imagename, cloudname):
     '''
     Opens and reads the pre fire image. 
     Takes in a path to a .tif file.
@@ -192,26 +235,32 @@ def pre(imagename):
     Keyword arguments:
     imagename -- the path to the image to be processed
     '''
+    
     with rasterio.open(imagename) as dataset:
         print('PRE BURN IMAGE')
         print('Name: ', dataset.name)
-        print('Bands: ', dataset.count)
-        print('Width: ', dataset.width)
-        print('Height: ', dataset.height)
+        #print('Bands: ', dataset.count)
+        #print('Width: ', dataset.width)
+        #print('Height: ', dataset.height)
         print('CRS: ', dataset.crs)
 
         profile = dataset.profile.copy()
+        transform = dataset.transform
+        
+        # TODO: Cloud mask and land mask
+        print('Running masks......')
+        cloudmask = getcloudmask(cloudname) 
 
-        red = dataset.read(3)
-        nir = dataset.read(7)
-        swir1 = dataset.read(9)
-        swir2 = dataset.read(10)
+        red = maskify(dataset.read(3), cloudmask)
+        nir = maskify(dataset.read(7), cloudmask)
+        swir1 = maskify(dataset.read(9), cloudmask)
+        swir2 = maskify(dataset.read(10), cloudmask)
 
         logging.debug('PRE image data read')
-        return red, nir, swir1, swir2, profile
+        return red, nir, swir1, swir2, profile, transform
 
 
-def post(imagename):
+def post(imagename, cloudname):
     ''' 
     Opens and reads the post fire image. 
     Takes in a path to a .tif file.
@@ -226,18 +275,20 @@ def post(imagename):
     with rasterio.open(imagename) as dataset:
         print('POST BURN IMAGE')
         print('Name: ', dataset.name)
-        print('Bands: ', dataset.count)
-        print('Width: ', dataset.width)
-        print('Height: ', dataset.height)
+        #print('Bands: ', dataset.count)
+        #print('Width: ', dataset.width)
+        #print('Height: ', dataset.height)
         print('CRS: ', dataset.crs)
 
         profile = dataset.profile.copy()
+        cloudmask = getcloudmask(cloudname) 
 
-        red = dataset.read(3)
-        nir = dataset.read(7)
-        swir1 = dataset.read(9)
-        swir2 = dataset.read(10)
-
+        red = maskify(dataset.read(3), cloudmask)
+        nir = maskify(dataset.read(7), cloudmask)
+        swir1 = maskify(dataset.read(9), cloudmask)
+        swir2 = maskify(dataset.read(10), cloudmask)
+        
+        
         logging.debug('POST image data read')
         return red, nir, swir1, swir2, profile
 
@@ -321,7 +372,85 @@ def threshold_imgs(dsavi, postnbr, dnbr2, thresholds):
     return sievedArray
 
 
-def savedata(od, datafile, profile, name, prename, postname):
+def grow_burn(dsavi, postnbr, dnbr2, thresholds):
+    '''
+    Uses a specified dictionary of thresholds applied to three input images to `grow` burn areas from the seed areas. 
+    
+    Return:
+    Burn area array
+
+    Keyword arguements:
+    dsavi -- pre/post difference in SAVI  
+    postnbr -- post NBR 
+    dnbr2 -- pre/post difference in NBR2
+    thresholds -- dictionary of thresholds - can be changed in __main__
+    '''
+
+    # Create a copy of the postnbr image and reset all values in output raster to 0
+    #reclassArray = postnbr.copy()
+    #reclassArray[np.where(reclassArray != 0)] = 0
+
+    # where dsavi is greater than the median and post fire image NBR is greater than the mean 
+    #reclassArray[np.where((dsavi>=(thresholds['threshdsavi'])) & (postnbr>=(thresholds['threshpostnbr'])))] = 1 
+    
+    # attempt to solve issue of edges of clouds being falsely identified which have high values in dnbr2
+    # rasterio function to exclude clumps of pixels smaller than 3.  Diagonally joined pixels are allowed.
+    
+    #reclassArray[np.where(dnbr2>=(thresholds['threshdnbr2']))] = 0
+    #sievedArray = rasterio.features.sieve(reclassArray.astype(rasterio.uint8), size=3, connectivity=8)
+    #-------------------------------------------
+
+    
+
+    #medians
+    #dNBRQ2 = 0.214064359664917
+    #dSAVIQ2 = 0.2852725386619568
+    #postNBRQ2 = 0.23950617015361786
+    #75th percentiles
+    #dNBRQ3 = 0.2735748812556267
+    #dSAVIQ3 = 0.3618958219885826
+    #postNBRQ3 = 0.2981530427932739
+    #dNBR2Q3 = 0.1445029228925705
+    #25th percentiles
+    #dSAVIQ1 = 0.20674878358840942
+    #postNBRQ1 = 0.17344753444194794
+
+    #Set the threshold
+    # for multiple indices threshold
+    # read in bands required 2 postnbr; 3 dnbr; 6 dnbr2; 15 dcsi; 21 dsavi 
+ #   indicesArray = s2.read([2,3,6,15,21])
+
+    # read in a single band as a template for the output reclassified image containing core burn pixels
+  #  band1 = s2.read(1)
+    extendArray = postnbr.copy()
+    # reset all values in output raster to 0 as otherwise pixel values not reclassed by the condition below may retain value from prenbr (band1)
+    extendArray[np.where(extendArray != 0)] = 0
+    #reclassArray[np.where(reclassArray != 0)] = 0
+
+    # set up second array to hold extended burn area
+    #extendArray = np.copy(reclassArray)
+
+    # reclassify the array to contain core burn pixels
+    # in this case where dsavi is greater than the median and post fire image NBR is greater than the median 
+    #reclassArray[np.where((indicesArray[4]>='dsaviq2thresh') & (indicesArray[0]>='postnbrq2thresh'))] = 1 
+    # then attempt to solve issue of edges of clouds being falsely identified which have high values in dnbr2
+    #reclassArray[np.where(indicesArray[2]>='cloudthresh')] = 0
+
+    # rasterio function to exclude clumps of pixels smaller than 3.  Diagonally joined pixels are allowed.
+    #sievedArray = sieve(reclassArray.astype(rasterio.uint8), size=3, connectivity=8)
+
+    # reclassify the second array to contain extended burn pixels
+    extendArray[np.where((dsavi>=(thresholds['dsaviq1thresh'])) & (postnbr>=(thresholds['postnbrq1thresh'])))] = 1 
+    # then attempt to solve issue of edges of clouds being falsely identified which have high values in dnbr2
+    extendArray[np.where(dnbr2>=(thresholds['cloudthresh']))] = 0
+
+    # rasterio function to exclude clumps of pixels smaller than 3.  Diagonally joined pixels are allowed.
+    burnedArray = rasterio.features.sieve(extendArray.astype(rasterio.uint8), size=3, connectivity=8)
+
+    return burnedArray
+
+
+def saveraster(od, datafile, profile, name, prename, postname):
     '''
     Saves spatial data 
     
@@ -340,21 +469,7 @@ def savedata(od, datafile, profile, name, prename, postname):
 
     kwds = profile
     
-    if name != 'burnseed':
-
-        # Change the format driver for the destination dataset to
-        #kwds['driver'] = 'GTiff'
-        kwds['dtype'] = 'float32'
-        kwds['count'] = 1
-
-        outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '_' + name + '.tif'
-
-        with rasterio.open((os.path.join(od, outname)), 'w', **kwds) as dst_dataset:
-        # Write data to the destination dataset.
-            dst_dataset.write(datafile, 1)
-
- 
-    else:
+    if name == 'burnseed':
         #Export the thresholded raster
         kwds.update(dtype=rasterio.uint8,
             count=1,
@@ -365,6 +480,102 @@ def savedata(od, datafile, profile, name, prename, postname):
             dst_dataset.write(datafile, 1)
 
 
+    elif name == 'burnarea':
+        #Export the thresholded raster
+        kwds.update(dtype=rasterio.uint8,
+            count=1,
+            compress='lzw')
+        outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '_' + name + '.tif'
+
+        with rasterio.open(os.path.join(od, outname), 'w', **kwds) as dst_dataset:
+            dst_dataset.write(datafile, 1)
+
+    else:
+        # Change the format driver for the destination dataset to
+        #kwds['driver'] = 'GTiff'
+        kwds['dtype'] = 'float32'
+        kwds['count'] = 1
+
+        outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '_' + name + '.tif'
+
+        with rasterio.open((os.path.join(od, outname)), 'w', **kwds) as dst_dataset:
+        # Write data to the destination dataset.
+            dst_dataset.write(datafile, 1)    
+
+
+def saveVector(od, sievedArray, burnedArray, profile, transform, prename, postname):
+    
+    with rasterio.open('/home/al/Downloads/temp_ndwi2.tif') as src:
+        data = src.read(1)
+
+    prename1 = prename
+    postname1 = postname
+
+    #create output base name
+    prename = prename1.split('_')
+    postname = postname1.split('_')
+
+    outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '.shp'
+
+
+    shapes = (
+                {'properties': {'raster_val': v, 'pre': prename1, 'post': postname1}, 'geometry': s}
+                for i, (s, v) 
+                in enumerate(
+                    rasterio.features.shapes(sievedArray, transform=transform)))
+
+
+    coreShapesGeoms = list(shapes)
+    # convert geoJSON objects to a geopandas data frame
+    gpd_coreShapes  = gpd.GeoDataFrame.from_features(coreShapesGeoms)
+    #print('dataframe complete')
+    # it has no projection though so this is defined
+    gpd_coreShapes = gpd_coreShapes.set_crs(epsg=27700)
+
+    # now do the same for extended burn areas ####
+    extendShapes = (
+                {'properties': {'raster_val': v}, 'geometry': s}
+                for i, (s, v) 
+                in enumerate(
+                    rasterio.features.shapes(burnedArray, transform=transform)))
+
+    extendShapesGeoms = list(extendShapes)
+    # convert geoJSON objects to a geopandas data frame
+    gpd_extendShapes  = gpd.GeoDataFrame.from_features(extendShapesGeoms)
+
+    # it has no projection though so this is defined
+    gpd_extendShapes = gpd_extendShapes.set_crs(epsg=27700)
+
+    # check it looks ok and crs has been set
+    #print(gpd_extendShapes.crs)
+    #print(gpd_extendShapes.info)
+
+    #Use spatial join to detect polygons in extended burn areas that intersect core burn pixels
+
+    # subset the geodataframes to only include rows that are burns
+    gpd_coreBurnShapes = gpd_coreShapes[gpd_coreShapes["raster_val"] == 1.0]
+    gpd_extendBurnShapes = gpd_extendShapes[gpd_extendShapes["raster_val"] == 1.0]
+
+    # indexing needs to be reset to enable spatial join to work properly
+    gpd_coreBurnShapes = gpd_coreBurnShapes.reset_index(drop=True)
+    gpd_extendBurnShapes = gpd_extendBurnShapes.reset_index(drop=True)
+    # print(gpd_coreBurnShapes.info)
+
+    # carry out spatial join
+    gpd_spatialJoin = gpd.sjoin(gpd_extendBurnShapes, gpd_coreBurnShapes, how="inner", op='intersects')
+    # get rid of attribute columns which are not required
+    gpd_spatialJoin = gpd_spatialJoin.drop(columns=['index_right','raster_val_left','raster_val_right'])
+    # drop duplicate geometries
+    gpd_finalShapes = gpd_spatialJoin.drop_duplicates(subset = 'geometry', keep = 'first')
+
+    print(gpd_finalShapes.info)
+
+    #Export outputs
+
+    # export to shapefile
+    gpd_finalShapes.to_file(os.path.join(od,outname), driver='ESRI Shapefile')
+
+    
 
 
 
@@ -394,6 +605,9 @@ if __name__ == "__main__":
 
     # Get data and list of processed files
     # First call in any file names that have een processed. Then get unprocessed files, for Scotland, ignoring certain months
+    
+    # TODO: load country land mask 
+    landmask = getlandmask(config.LANDMASK)
     proc_list = picklecheck(od)
     toprocess = getdatalist(wd, proc_list, config.PROC_GRANULES, config.MONTHS_OUT)
 
@@ -429,63 +643,84 @@ if __name__ == "__main__":
     
     count = 1
     runno = 0
-    # while len(cleanlist) > 0:
-    #     print('--GETTING DATA--')
-    #     runno = runno+1
-    #     if count == 1:
-    #         postlist = cleanlist.pop()
-    #         #print('postlist: ', postlist)
-    #         # post-fire image
-    #         postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(postlist[1], postlist[0]))
+    while len(cleanlist) > 0:
+        print('--GETTING DATA--')
+        runno = runno+1
+        if count == 1:
+            postlist = cleanlist.pop()
+            #print('postlist: ', postlist)
+            # post-fire image
+            # create associated cloud image name
+            names = postlist[0].split('_')[:7]
+            names.append('clouds.tif')
+            s = '_'
+            cloudname = s.join(names)
+
+            postred, postnir, postswir1, postswir2, postprofile = post(os.path.join(postlist[1], postlist[0]), os.path.join(postlist[1], cloudname))
         
         
-    #     count = 2
-    #     prelist = cleanlist.pop()
-    #     #print(prelist[2], postlist[2])
+        count = 2
+        prelist = cleanlist.pop()
+        #print(prelist[2], postlist[2])
 
-    #     # pre-fire image
-    #     prered, prenir, preswir1, preswir2, preprofile = pre(os.path.join(prelist[1], prelist[0]))
+        # pre-fire image
+        # create associated cloud image name
+        names = prelist[0].split('_')[:7]
+        names.append('clouds.tif')
+        s = '_'
+        cloudname = s.join(names)
+        prered, prenir, preswir1, preswir2, preprofile, pretransform = pre(os.path.join(prelist[1], prelist[0]), os.path.join(prelist[1], cloudname))
         
-    #     if prelist[2]==postlist[2]:
+        if prelist[2]==postlist[2]:
 
-    #         #PROCESSING
+            #PROCESSING
 
-    #         print('--CALCULATING postNBR--')
-    #         #prenbr = nbr(preswir1, prenir)
-    #         postnbr = nbr(postswir1, postnir)
-    #         #dnbr = postnbr - prenbr
-
-
-    #         print('--CALCULATING dNBR2--')
-    #         # Pre/post NBR2 difference
-    #         dnbr2 = nbr2(postswir2, postswir1) - nbr2(preswir2, preswir1)
+            print('--CALCULATING postNBR--')
+            #prenbr = nbr(preswir1, prenir)
+            postnbr = nbr(postswir1, postnir)
+            #dnbr = postnbr - prenbr
 
 
-    #         print('--CALCULATING dSAVI--')
-    #         # Pre/post SAVI difference
-    #         dsavi = savi(postnir, postred) - savi(prenir, prered)
+            print('--CALCULATING dNBR2--')
+            # Pre/post NBR2 difference
+            dnbr2 = nbr2(postswir2, postswir1) - nbr2(preswir2, preswir1)
 
 
-    #         # Thresholding
-    #         print('--CALCULATING THRESHOLDING--')
-    #         thresholds = config.THRESHOLD # {'threshdsavi': 0.2853, 'threshpostnbr': 0.2395, 'threshdnbr2': 0.8, 'type': 'global'}
-    #         print('Thresholds used: ', thresholds)
-    #         burnseed = threshold_imgs(dsavi, postnbr, dnbr2, thresholds)
+            print('--CALCULATING dSAVI--')
+            # Pre/post SAVI difference
+            dsavi = savi(postnir, postred) - savi(prenir, prered)
 
 
-    #         # Save data
-    #         print('--SAVING DATA--')
-    #         savedata(od, postnbr, preprofile, 'postnbr', prelist[0], postlist[0])
-    #         savedata(od, dnbr2, preprofile, 'dnbr2', prelist[0], postlist[0])
-    #         savedata(od, dsavi, preprofile, 'dsavi', prelist[0], postlist[0])
-    #         savedata(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
-    #         print('Processed', runno, 'of', tot2process, 'files')
+            # Thresholding
+            print('--CALCULATING THRESHOLDING--')
+            thresholds = config.THRESHOLD # {'threshdsavi': 0.2853, 'threshpostnbr': 0.2395, 'threshdnbr2': 0.8, 'type': 'global'}
+            print('Thresholds used: ', thresholds)
+            burnseed = threshold_imgs(dsavi, postnbr, dnbr2, thresholds)
+
+            # Region growing
+            print('--CALCULATING BURN REGIONS--')
+            thresholds = config.GROW 
+            print('Thresholds used: ', thresholds)
+            burnarray = grow_burn(dsavi, postnbr, dnbr2, thresholds)
+
+
+            # Save data
+            print('--SAVING DATA--')
+            #saveraster(od, postnbr, preprofile, 'postnbr', prelist[0], postlist[0])
+            #saveraster(od, dnbr2, preprofile, 'dnbr2', prelist[0], postlist[0])
+            #saveraster(od, dsavi, preprofile, 'dsavi', prelist[0], postlist[0])
+            saveraster(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
+            saveraster(od, burnarray, preprofile, 'burnarea', prelist[0], postlist[0])
+
+            saveVector(od, burnseed, burnarray, preprofile, pretransform)
+
+            print('Processed', runno, 'of', tot2process, 'files')
         
 
 
-    #     if len(cleanlist) >= 1:
-    #         postlist = prelist
-    #         postred, postnir, postswir1, postswir2, postprofile = prered, prenir, preswir1, preswir2, preprofile
+        if len(cleanlist) >= 1:
+            postlist = prelist
+            postred, postnir, postswir1, postswir2, postprofile = prered, prenir, preswir1, preswir2, preprofile
         
 
 

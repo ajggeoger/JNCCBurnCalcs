@@ -34,6 +34,7 @@ The code is presented as a single script (operationalcode.py) and configuration 
 
 
 ## ToDo
-* Add region growing code
 * Investigate and add more robust error capturing to the code
 * Investigate the use of parallel processing (either on the science server using tools such as dask or on the SLURM cluster batch compute on JASMIN)
+* Improve shapefile output
+* Refactor code into multiple files for ease of reading

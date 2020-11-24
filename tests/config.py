@@ -9,11 +9,17 @@ Contributors:
 ARD_WRKDIR = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/2019'           # Input ARD data  
 GWS = '/gws/nopw/j04/jncc_muirburn'                                            # Group workspace
 GWS_DATA = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/output_data'      # GWS output location
+LANDMASK = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/incoming_data/scotland_mask_1bit.tif' # Land mask 1bit
 
 # --Other parameters--
 # Image thresholding values - the variable names are set in the code, but the values can be changed here.
 # The type is a helper variable so that users know how it is being applied (global == to all images). 
 THRESHOLD = {'threshdsavi': 0.2853, 'threshpostnbr': 0.2395, 'threshdnbr2': 0.8, 'type': 'global'}
+
+# Image thresholding values - the variable names are set in the code, but the values can be changed here.
+# The type is a helper variable so that users know how it is being applied (global == to all images). 
+GROW = {'dsaviq1thresh': 0.206748, 'postnbrq1thresh': 0.173447, 'cloudthresh': 0.8, 'type': 'global'}
+
 
 # Toggle the file count function on and off. Value can be 'off' or 'on'
 FILECOUNT = 'off'
