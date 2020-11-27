@@ -27,6 +27,7 @@ S2B = Sentinel satellite
 T31UCV = granule ID
 ORB094 = orbit ID
 
+A shapefile is also output.
 
 
 ## How To
@@ -36,5 +37,5 @@ The code is presented as a single script (operationalcode.py) and configuration 
 ## ToDo
 * Investigate and add more robust error capturing to the code
 * Investigate the use of parallel processing (either on the science server using tools such as dask or on the SLURM cluster batch compute on JASMIN)
-* Improve shapefile output
-* Refactor code into multiple files for ease of reading
+* Improve thresholding values
+* Refactor code into multiple files for ease of reading and debugging

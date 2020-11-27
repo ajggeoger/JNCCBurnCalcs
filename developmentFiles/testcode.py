@@ -30,7 +30,9 @@ import copy
 
 import numpy as np
 import rasterio
+import fiona
 from rasterio.features import sieve
+from rasterio.mask import mask
 import geopandas as gpd
 
 import config # config.py configuration parameters
@@ -181,7 +183,7 @@ def countfiles(wd):
 
     return fileno
 
-def getlandmask(imagename):
+def getlandmask(landmaskpath):
     '''
     Opens and reads the land mask dataset. 
     Takes in a path to a .tif file.
@@ -192,16 +194,13 @@ def getlandmask(imagename):
     Keyword arguments:
     imagename -- the path to the image to be processed
     '''
+    # landmask is path to file from CONFIG
+    with fiona.open(landmaskpath, "r") as landmaskshp:
+        shapes = [feature["geometry"] for feature in landmaskshp]
+
     
-    with rasterio.open(imagename) as dataset:
-        print('LOADING LANDMASK')
-        print('Name: ', dataset.name)
-        print('CRS: ', dataset.crs)
-
-        landmask = dataset.read(1)
-
         logging.debug('landmask data read')
-        return landmask
+        return shapes
 
 
 def getcloudmask(cloudname):
@@ -216,12 +215,31 @@ def getcloudmask(cloudname):
         return new_mask
 
 
-def maskify(image, cloudmask): #, landmask):
+def maskify(image, cloudmask):#, landmask):
     #pass
     # TODO: LANDMASK
+    
     maskedimage = image * cloudmask
     #logging.debug('masking complete')
     return maskedimage
+
+
+def masktheland(dataset):
+        #THIS WORKS
+    
+    
+    #with rasterio.open("/opt/app/data/S2B_20190725_lat57lon375_T30VVJ_ORB123_utm30n_osgb_valid.tif") as src:
+    out_image, out_transform = rasterio.mask.mask(dataset, landmask, crop=True)
+    # out_image, out_transform = rasterio.mask.mask(image, shapes, crop=True)
+    out_meta = dataset.meta
+    
+    out_meta.update({"driver": "GTiff",
+        "height": out_image.shape[1],
+        "width": out_image.shape[2],
+        "transform": out_transform})
+
+    with rasterio.open(os.path.join(od, 'temp.tif'), "w", **out_meta) as dest:
+        dest.write(out_image)
 
 
 def pre(imagename, cloudname):
@@ -243,24 +261,25 @@ def pre(imagename, cloudname):
         #print('Width: ', dataset.width)
         #print('Height: ', dataset.height)
         print('CRS: ', dataset.crs)
-
+        print('Cropping to land mask')
+        masktheland(dataset)
+        
+    with rasterio.open(os.path.join(od, 'temp.tif')) as dataset:
         profile = dataset.profile.copy()
         transform = dataset.transform
-        
-        # TODO: Cloud mask and land mask
-        print('Running masks......')
+
         cloudmask = getcloudmask(cloudname) 
-
-        red = maskify(dataset.read(3), cloudmask)
-        nir = maskify(dataset.read(7), cloudmask)
-        swir1 = maskify(dataset.read(9), cloudmask)
-        swir2 = maskify(dataset.read(10), cloudmask)
-
+        print('Masking for cloud')
+        red = maskify(dataset.read(3), cloudmask) #, landmask)
+        nir = maskify(dataset.read(7), cloudmask) #, landmask)
+        swir1 = maskify(dataset.read(9), cloudmask) #, landmask)
+        swir2 = maskify(dataset.read(10), cloudmask) #,landmask)
+        
         logging.debug('PRE image data read')
         return red, nir, swir1, swir2, profile, transform
 
 
-def post(imagename, cloudname):
+def post(imagename, cloudname):#, landmask):
     ''' 
     Opens and reads the post fire image. 
     Takes in a path to a .tif file.
@@ -279,14 +298,17 @@ def post(imagename, cloudname):
         #print('Width: ', dataset.width)
         #print('Height: ', dataset.height)
         print('CRS: ', dataset.crs)
-
+        print('Cropping to land mask')
+        masktheland(dataset)
+        
+    with rasterio.open(os.path.join(od, 'temp.tif')) as dataset:
         profile = dataset.profile.copy()
         cloudmask = getcloudmask(cloudname) 
-
-        red = maskify(dataset.read(3), cloudmask)
-        nir = maskify(dataset.read(7), cloudmask)
-        swir1 = maskify(dataset.read(9), cloudmask)
-        swir2 = maskify(dataset.read(10), cloudmask)
+        print('Masking for cloud')
+        red = maskify(dataset.read(3), cloudmask) #, landmask)
+        nir = maskify(dataset.read(7), cloudmask) #, landmask)
+        swir1 = maskify(dataset.read(9), cloudmask) #, landmask)
+        swir2 = maskify(dataset.read(10), cloudmask) #,landmask)
         
         
         logging.debug('POST image data read')
@@ -514,12 +536,12 @@ def saveVector(od, sievedArray, burnedArray, profile, transform, prename, postna
     #create output base name
     prename = prename1.split('_')
     postname = postname1.split('_')
-
+    # satname 
     outname = prename[0] + prename[1] + prename[3] + prename[4] + '_' + postname[0] + postname[1] + postname[3] + postname[4] + '.shp'
 
 
     shapes = (
-                {'properties': {'raster_val': v, 'pre': prename1, 'post': postname1}, 'geometry': s}
+                {'properties': {'raster_val': v, 'pre': prename1, 'post': postname1, 'predate': prename[1], 'postdate': postname[1],'granule': prename[3]}, 'geometry': s}
                 for i, (s, v) 
                 in enumerate(
                     rasterio.features.shapes(sievedArray, transform=transform)))
@@ -590,7 +612,7 @@ if __name__ == "__main__":
     
     # Set output directory
     od = config.GWS_DATA
-    
+
     # Set logfile 
     logfile = os.path.join(od, (datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")+'-processing.log'))
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format='%(asctime)s %(message)s')
@@ -606,7 +628,6 @@ if __name__ == "__main__":
     # Get data and list of processed files
     # First call in any file names that have een processed. Then get unprocessed files, for Scotland, ignoring certain months
     
-    # TODO: load country land mask 
     landmask = getlandmask(config.LANDMASK)
     proc_list = picklecheck(od)
     toprocess = getdatalist(wd, proc_list, config.PROC_GRANULES, config.MONTHS_OUT)
@@ -712,7 +733,7 @@ if __name__ == "__main__":
             saveraster(od, burnseed, preprofile, 'burnseed', prelist[0], postlist[0])
             saveraster(od, burnarray, preprofile, 'burnarea', prelist[0], postlist[0])
 
-            saveVector(od, burnseed, burnarray, preprofile, pretransform)
+            saveVector(od, burnseed, burnarray, preprofile, pretransform, prelist[0], postlist[0])
 
             print('Processed', runno, 'of', tot2process, 'files')
         
@@ -736,8 +757,13 @@ if __name__ == "__main__":
     # text file
     with open(os.path.join(od, 'imagelist.txt'), 'w') as outfiletxt:
         outfiletxt.writelines("%s" % line for line in checklist)
-
-
+    
+    # clean up temp file
+    if os.path.exists(os.path.join(od, 'temp.tif')):
+        os.remove(os.path.join(od, 'temp.tif'))
+    else:
+        print("The file does not exist")
+        pass
 
     # Stop timer
     endtime1=datetime.datetime.now()

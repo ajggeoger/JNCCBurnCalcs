@@ -1,20 +1,27 @@
 """
-This module contains configuration information for use in the code for running on JASMIN to calculate burn locations in Scotland, using data held on CEDA
+This module contains configuration information for use in the code for running on JASMIN to calculate 
+burn locations in Scotland, using data held on CEDA
     
 Contributors: 
     Alastair Graham, Geoger Ltd, @ajggeoger
 
 """
 # --Main set up--
-ARD_WRKDIR = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/2019'           # Input ARD data  
-GWS = '/gws/nopw/j04/jncc_muirburn'                                            # Group workspace
-GWS_DATA = '/home/al/sdaDocuments/ProjectFiles/Muirburn_TEMP/output_data'      # GWS output location
+ARD_WRKDIR = '/neodc/sentinel_ard/data/sentinel_2/2019/04'           # Input ARD data (default is April 2019)  
+GWS = '/gws/nopw/j04/jncc_muirburn'                                  # Group workspace
+GWS_DATA = '/gws/nopw/j04/jncc_muirburn/users'                       # GWS output location (needs an output folder added) 
+LANDMASK = '/gws/nopw/j04/jncc_muirburn/data/Scot_LandMask/scot_landonly.shp' # Landmask shapefile location
 
 # --Other parameters--
-# Image thresholding values - more description
+# Image thresholding values - the variable names are set in the code, but the values can be changed here.
+# The type is a helper variable so that users know how it is being applied. It is not used in the code (global == to all images). 
 THRESHOLD = {'threshdsavi': 0.2853, 'threshpostnbr': 0.2395, 'threshdnbr2': 0.8, 'type': 'global'}
 
-# Toggle the file count function on and off. Nalue can be 'off' or 'on'
+# Image thresholding values - the variable names are set in the code, but the values can be changed here.
+# The type is a helper variable so that users know how it is being applied. It is not used in the code (global == to all images). 
+GROW = {'dsaviq1thresh': 0.206748, 'postnbrq1thresh': 0.173447, 'cloudthresh': 0.8, 'type': 'global'}
+
+# Toggle the file count function on and off. Value can be 'off' or 'on'
 FILECOUNT = 'off'
 
 # Cloud cover threshold (for use in future versions, not called in current code)
@@ -25,5 +32,3 @@ PROC_GRANULES = ['T29UPB', 'T29VNC', 'T29VND', 'T29VNE', 'T29VNF', 'T29VPC', 'T2
 
 # Date filter for seasonality - do not process 01 Sept - 31 dec inclusive - Scottish ARD only starts in Feb 2019
 MONTHS_OUT = ['09', '10', '11', '12']
-
-
