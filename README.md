@@ -1,3 +1,8 @@
+# OLD CODE:
+This repo is now out of date. It contains legacy code that has been developed further and is now available from the following repository -
+https://github.com/Scottish-Natural-Heritage/GIG-JNCC-Muirburn
+
+
 # JNCCBurnCalcs
 Code linked to the JNCC Muirburn project, designed to run on JASMIN using ARD from CEDA.
 
